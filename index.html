@@ -2,37 +2,59 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>God Stickman</title>
+    <title>God Stickman Fighting</title>
     <style>
-        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; }
-        canvas { border: 2px solid #555; background: #111; }
-        #ui { position: absolute; top: 10px; left: 10px; }
+        body { margin: 0; background: #0a0a0c; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #game-wrapper { width: 100vw; height: 100vh; max-width: 960px; max-height: 540px; background: #141419; position: relative; border: 2px solid #333; }
+        canvas { width: 100%; height: 100%; display: block; }
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
+        input { background: #222; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; }
+        button { cursor: pointer; padding: 8px 16px; background: #ffeb3b; border: none; font-weight: bold; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <input type="text" id="code" placeholder="Mã Admin...">
-        <button onclick="check()">Kích hoạt</button>
-        <p id="msg"></p>
+
+<div id="game-wrapper">
+    <div id="overlay">
+        <h1>GOD STICKMAN FIGHTING</h1>
+        <button onclick="startGame()">BẮT ĐẦU TRẬN ĐẤU</button>
+        <div style="margin-top:20px;">
+            <input type="text" id="adminCode" placeholder="Nhập mã Admin...">
+            <button onclick="checkAdmin()">Kích hoạt</button>
+        </div>
+        <div id="msg" style="margin-top:10px; font-weight:bold;"></div>
     </div>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+</div>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-        // Vẽ thử nhân vật để kiểm tra
-        ctx.fillStyle = "white";
-        ctx.fillRect(50, 200, 40, 80);
-
-        function check() {
-            const code = document.getElementById('code').value;
-            if (code === 'anhdzvcl_god') {
-                document.getElementById('msg').innerText = "Đã bật Bất Tử!";
-            } else {
-                document.getElementById('msg').innerText = "Sai mã!";
-            }
+    function checkAdmin() {
+        const code = document.getElementById('adminCode').value.trim().toLowerCase();
+        const msg = document.getElementById('msg');
+        if (code === 'anhdzvcl_god') {
+            msg.style.color = "#4caf50";
+            msg.innerText = "⭐ Đã kích hoạt Bất Tử!";
+        } else {
+            msg.style.color = "#f44336";
+            msg.innerText = "❌ Mã sai!";
         }
-    </script>
+    }
+
+    function startGame() {
+        document.getElementById('overlay').style.display = 'none';
+        animate();
+    }
+
+    function animate() {
+        ctx.fillStyle = "#0a0a0c";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.fillRect(450, 220, 60, 100); // Nhân vật minh họa
+        requestAnimationFrame(animate);
+    }
+</script>
 </body>
 </html>
