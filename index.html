@@ -2,55 +2,492 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>God Stickman</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>God Stickman Fighting - Admin ANHDZVCL Edition</title>
     <style>
-        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { width: 960px; height: 540px; background: #1a1a1a; position: relative; }
-        canvas { width: 100%; height: 100%; display: block; }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
+        body { background: #0a0a0c; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        
+        #game-wrapper { position: relative; width: 100vw; height: 100vh; max-width: 960px; max-height: 540px; aspect-ratio: 16/9; background: #141419; border: 4px solid #2d2d38; box-shadow: 0 20px 50px rgba(0,0,0,0.8); overflow: hidden; border-radius: 12px; }
+        canvas { width: 100%; height: 100%; display: block; background: linear-gradient(to bottom, #1a1c2e, #0e101f); }
+        
+        /* MÀN HÌNH CHỌN ĐỘ KHÓ & ADMIN BAN ĐẦU */
+        #difficulty-screen { position: absolute; inset: 0; background: rgba(10, 10, 15, 0.95); z-index: 30; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; backdrop-filter: blur(8px); }
+        .menu-title { color: #fff; font-size: 28px; font-weight: 900; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255,255,255,0.2); text-transform: uppercase; }
+        .menu-subtitle { color: #888; font-size: 14px; margin-top: -10px; font-style: italic; }
+        .diff-container { display: flex; gap: 20px; width: 80%; max-width: 500px; }
+        .diff-card { flex: 1; background: #1c1d26; border: 2px solid #2d2d38; border-radius: 10px; padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; }
+        .diff-card:hover { transform: translateY(-5px); }
+        .diff-card.easy { border-color: #4caf50; box-shadow: 0 0 15px rgba(76,175,80,0.2); }
+        .diff-card.hard { border-color: #f44336; box-shadow: 0 0 15px rgba(244,67,54,0.4); }
+        .diff-name { font-size: 18px; font-weight: bold; text-transform: uppercase; }
+        .diff-card.easy .diff-name { color: #4caf50; }
+        .diff-card.hard .diff-name { color: #f44336; animation: pulse 1.5s infinite; }
+        .diff-desc { color: #aaa; font-size: 11px; text-align: center; line-height: 1.4; }
+        
+        /* KHU VỰC NHẬP MÃ ADMIN */
+        .admin-box { background: #15161e; border: 1px solid #ffeb3b; padding: 12px 20px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; width: 80%; max-width: 500px; box-shadow: 0 4px 15px rgba(255,235,59,0.1); }
+        .admin-label { color: #ffeb3b; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+        .admin-input-row { display: flex; gap: 8px; }
+        .admin-input { flex: 1; background: #212330; border: 1px solid #455a64; color: #fff; padding: 8px 12px; font-size: 14px; border-radius: 4px; outline: none; text-align: center; font-family: monospace; font-weight: bold; }
+        .admin-input:focus { border-color: #ffeb3b; box-shadow: 0 0 8px rgba(255,235,59,0.2); }
+        .btn-admin-submit { background: #ffeb3b; color: #000; border: none; padding: 8px 16px; font-weight: bold; font-size: 13px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-admin-submit:hover { background: #fff; box-shadow: 0 0 10px #ffeb3b; }
+        .admin-msg { font-size: 11px; text-align: center; font-weight: bold; min-height: 14px; }
+        .admin-msg.success { color: #4caf50; }
+        .admin-msg.error { color: #f44336; }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 5px rgba(244,67,54,0.6); }
+            50% { text-shadow: 0 0 20px rgba(244,67,54,1); }
+            100% { text-shadow: 0 0 5px rgba(244,67,54,0.6); }
+        }
+
+        /* HUD SHOP & EXIT BUTTON */
+        .shop-zone { position: absolute; top: 12px; left: 15px; display: flex; align-items: center; gap: 10px; background: rgba(0, 0, 0, 0.6); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.4); backdrop-filter: blur(4px); pointer-events: auto; z-index: 5; }
+        .shop-info { display: flex; flex-direction: column; }
+        .shop-title { font-size: 10px; color: #aaa; font-weight: bold; text-transform: uppercase; }
+        .honor-badge { font-size: 13px; color: #ffd700; font-weight: 900; text-shadow: 0 0 4px rgba(255,215,0,0.4); }
+        .btn-open-shop { background: #e65100; border: 1px solid #ff9800; color: #fff; font-size: 11px; font-weight: bold; padding: 6px 12px; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.1s; }
+        
+        .exit-zone { position: absolute; top: 12px; right: 15px; z-index: 5; }
+        .btn-exit-game { background: #263238; border: 1px solid #37474f; color: #b0bec5; font-size: 11px; font-weight: bold; padding: 8px 16px; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.1s; }
+        .btn-exit-game:hover { background: #b71c1c; border-color: #ff5252; color: #fff; box-shadow: 0 0 10px rgba(244,67,54,0.4); }
+
+        /* SHOP MODAL */
+        #shop-modal { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); z-index: 20; backdrop-filter: blur(6px); justify-content: center; align-items: center; }
+        .shop-content { background: #1c1d26; border: 2px solid #ff9800; border-radius: 12px; width: 90%; max-width: 550px; padding: 18px; box-shadow: 0 0 25px rgba(255,152,0,0.3); display: flex; flex-direction: column; gap: 12px; max-height: 95%; overflow-y: auto; }
+        .shop-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d2d38; padding-bottom: 8px; }
+        .shop-modal-title { color: #ff9800; font-size: 18px; font-weight: bold; }
+        .btn-close-shop { background: #37474f; border: none; color: #fff; padding: 4px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        
+        .section-title { font-size: 13px; color: #ffeb3b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid #ffeb3b; padding-left: 6px; margin: 4px 0; }
+        .item-list { display: flex; flex-direction: column; gap: 8px; }
+        .shop-item { display: flex; justify-content: space-between; align-items: center; background: #252733; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .item-det { display: flex; flex-direction: column; }
+        .item-name { color: #fff; font-size: 13px; font-weight: bold; }
+        .item-desc { color: #aaa; font-size: 11px; margin-top: 2px; }
+        .btn-buy { background: #2e7d32; border: 1px solid #4caf50; color: #fff; font-size: 11px; font-weight: bold; padding: 5px 12px; border-radius: 4px; cursor: pointer; min-width: 85px; text-align: center; }
+        .btn-buy.disabled { background: #37474f !important; border-color: #455a64 !important; color: #90a4ae !important; cursor: not-allowed; }
+
+        .equip-zone { background: #15161e; border: 1px dashed #4caf50; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .equip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .equip-card { background: #212330; border: 2px solid #37474f; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; opacity: 0.5; }
+        .equip-card.owned { opacity: 1; border-color: #555; }
+        .equip-card.active-equipped { border-color: #4caf50; background: rgba(76, 175, 80, 0.1); box-shadow: inset 0 0 10px rgba(76,175,80,0.2); }
+        .equip-card-title { color: #fff; font-size: 11px; font-weight: bold; }
+        .btn-equip { width: 100%; background: #1976d2; border: none; color: #fff; font-size: 10px; font-weight: bold; padding: 4px; border-radius: 4px; cursor: pointer; }
+
+        /* HUD BARS */
+        .ui-layer { position: absolute; top: 58px; left: 15px; right: 15px; display: flex; justify-content: space-between; pointer-events: none; }
+        .hud-block { width: 42%; display: flex; flex-direction: column; gap: 4px; }
+        .hud-block.p2 { align-items: flex-end; }
+        .char-name { color: #fff; font-size: 14px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .bar-container { position: relative; width: 100%; height: 16px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.1s ease-out; }
+        .hp-fill { background: linear-gradient(90deg, #ff3366, #ff5e62); }
+        .p2 .hp-fill { background: linear-gradient(270deg, #ff3366, #ff5e62); }
+        .mp-fill { background: linear-gradient(90deg, #00f2fe, #4facfe); width: 0%; }
+        .p2 .mp-fill { background: linear-gradient(270deg, #00f2fe, #4facfe); }
+        .bar-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 900; text-shadow: 1px 1px 2px #000; }
+        .timer-center { font-size: 28px; font-weight: 900; color: #ffeb3b; text-shadow: 0 0 10px rgba(255,235,59,0.5); padding: 0 10px; margin-top: -5px; }
+
+        /* GAME OVER */
+        #game-over { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: center; align-items: center; color: white; gap: 20px; z-index: 10; backdrop-filter: blur(8px); }
+        #winnerText { font-size: 32px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 20px #ff3366; text-transform: uppercase; text-align: center; white-space: pre-line; }
+        .btn-restart { padding: 12px 35px; font-size: 17px; font-weight: bold; color: white; background: #ff3366; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
+
+        /* CONTROLS */
+        .controls-layer { position: absolute; bottom: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .pad { display: grid; gap: 10px; }
+        .move-pad { grid-template-columns: repeat(3, 55px); grid-template-rows: repeat(2, 55px); }
+        .atk-pad { grid-template-columns: repeat(3, 60px); gap: 8px; }
+        .btn { background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.25); color: #fff; border-radius: 50%; font-weight: bold; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.1s, transform 0.05s; font-size: 15px; -webkit-tap-highlight-color: transparent; }
+        .btn:active { background: rgba(255,255,255,0.4); transform: scale(0.92); }
+        
+        #p1-left { grid-column: 1; grid-row: 2; }
+        #p1-right { grid-column: 3; grid-row: 2; }
+        #p1-jump { grid-column: 2; grid-row: 1; }
+        #p1-down { grid-column: 2; grid-row: 2; }
+        
+        .btn-txt { border-radius: 12px; font-size: 12px; font-weight: 800; text-transform: uppercase; height: 45px; }
+        .btn-block { background: #2e7d32; border-color: #4caf50; }
+        .btn-skill { background: #1565c0; border-color: #2196f3; }
+        .btn-berserk { background: #7b1fa2; border-color: #ba68c8; font-size: 10px !important; line-height: 1.1; text-align: center; }
+        .btn.cooldown { background: #263238 !important; border-color: #37474f !important; color: #78909c !important; cursor: not-allowed; }
+        .btn-rapid { background: #b71c1c; border-color: #ff5252; grid-column: span 3; width: 100%; height: 44px; border-radius: 12px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
+<div id="game-wrapper">
+    <!-- MÀN HÌNH CHỌN ĐỘ KHÓ -->
+    <div id="difficulty-screen">
+        <div class="menu-title">⚔️ CHỌN ĐỘ KHÓ BOT ⚔️</div>
+        <div class="menu-subtitle">Chọn thử thách của bạn trước khi lâm trận</div>
+        <div class="diff-container">
+            <div class="diff-card easy" onclick="selectDifficulty('easy')">
+                <span class="diff-name">🟢 BOT DỄ</span>
+                <span class="diff-desc">Shadow Apprentice<br>Phản xạ chậm, ít phòng thủ. Thích hợp tập luyện.</span>
+            </div>
+            <div class="diff-card hard" onclick="selectDifficulty('hard')">
+                <span class="diff-name">🔴 BOT KHÓ (x5 DMG)</span>
+                <span class="diff-desc">Shadow Overlord<br>SÁT THƯƠNG x5 LẦN! Sở hữu Dư Ảnh Trận và Hút Máu bá đạo.</span>
+            </div>
+        </div>
+
+        <!-- KHU VỰC NHẬP MÃ ADMIN -->
+        <div class="admin-box">
+            <div class="admin-label">🔐 HỆ THỐNG KÍCH HOẠT ADMIN CODE</div>
+            <div class="admin-input-row">
+                <input type="text" id="adminCodeInput" class="admin-input" placeholder="Nhập mã Admin tại đây...">
+                <button class="btn-admin-submit" onclick="checkAdminCode()">Kích hoạt</button>
+            </div>
+            <div id="adminMessage" class="admin-msg"></div>
+        </div>
+    </div>
+
     <canvas id="gameCanvas" width="960" height="540"></canvas>
+    
+    <!-- HUD SHOP & EXIT -->
+    <div class="shop-zone">
+        <div class="shop-info">
+            <span class="shop-title">Hệ Thống Shop</span>
+            <span id="p1-honor" class="honor-badge">Vinh Dự: 0</span>
+        </div>
+        <button class="btn-open-shop" onclick="openShop()">Mở Cửa Hàng</button>
+    </div>
+    <div class="exit-zone"><button class="btn-exit-game" onclick="exitToMenu()">Thoát</button></div>
+
+    <!-- SHOP MODAL -->
+    <div id="shop-modal">
+        <div class="shop-content">
+            <div class="shop-header">
+                <div class="shop-modal-title">🏪 CỬA HÀNG & TRANG BỊ VINH DỰ</div>
+                <button class="btn-close-shop" onclick="closeShop()">Đóng</button>
+            </div>
+            <div class="section-title">Giỏ Hàng Vật Phẩm</div>
+            <div class="item-list">
+                <div class="shop-item">
+                    <div class="item-det"><span class="item-name">🔥 Kỹ Kăng: Thần Chưởng</span><span class="item-desc">Gây 35 Sát thương xuyên thấu</span></div>
+                    <button class="btn-buy" id="buy-item-1" onclick="buyItem(1, 100)">100 VD</button>
+                </div>
+                <div class="shop-item">
+                    <div class="item-det"><span class="item-name">🛡️ Hộ Thể: Long Thần Khiên</span><span class="item-desc">Chặn 96% mọi đòn đánh</span></div>
+                    <button class="btn-buy" id="buy-item-2" onclick="buyItem(2, 60)">60 VD</button>
+                </div>
+                <div class="shop-item">
+                    <div class="item-det"><span class="item-name">🧪 Huyết Dược Cao Cấp</span><span class="item-desc">Hồi phục thẳng +50% HP</span></div>
+                    <button class="btn-buy" id="buy-item-3" onclick="buyItem(3, 40)">40 VD</button>
+                </div>
+            </div>
+            <div class="section-title">Khu Trang Bị Kỹ Năng</div>
+            <div class="equip-zone">
+                <div class="equip-grid">
+                    <div class="equip-card owned" id="card-skill-default"><span class="equip-card-title">Chưởng Thường</span><button class="btn-equip active" id="btn-eq-default" onclick="equipSkill('default')">Đang Dùng</button></div>
+                    <div class="equip-card" id="card-skill-evolved"><span class="equip-card-title">Thần Chưởng</span><button class="btn-equip" id="btn-eq-evolved" onclick="equipSkill('evolved')" disabled>Chưa Mở</button></div>
+                    <div class="equip-card" id="card-skill-shield"><span class="equip-card-title">Long Thần Khiên</span><button class="btn-equip" id="btn-eq-shield" onclick="equipSkill('shield')" disabled>Chưa Mở</button></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD LAYER -->
+    <div class="ui-layer">
+        <div class="hud-block p1">
+            <div class="char-name">God Stickman (P1)</div>
+            <div class="bar-container"><div id="p1-hp" class="bar-fill hp-fill"></div><div id="p1-hp-text" class="bar-text">100%</div></div>
+            <div class="bar-container"><div id="p1-mp" class="bar-fill mp-fill"></div></div>
+        </div>
+        <div class="timer-center" id="game-timer">99</div>
+        <div class="hud-block p2">
+            <div class="char-name" id="p2-name-tag">Shadow Boss (P2)</div>
+            <div class="bar-container"><div id="p2-hp" class="bar-fill hp-fill"></div><div id="p2-hp-text" class="bar-text">100%</div></div>
+            <div class="bar-container"><div id="p2-mp" class="bar-fill mp-fill"></div></div>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over"><div id="winnerText"></div><button class="btn-restart" onclick="resetGame()">Tái Đấu</button></div>
+
+    <!-- CONTROLS -->
+    <div class="controls-layer">
+        <div class="pad move-pad">
+            <div class="btn" id="p1-jump">▲</div><div class="btn" id="p1-left">◀</div><div class="btn" id="p1-down">▼</div><div class="btn" id="p1-right">▶</div>
+        </div>
+        <div class="pad atk-pad">
+            <div class="btn btn-rapid" id="p1-rapid">300 ĐẤM (50 MP)</div>
+            <div class="btn btn-txt" id="p1-hit">ĐẤM</div><div class="btn btn-txt btn-block" id="p1-block">ĐỠ</div><div class="btn btn-txt btn-skill" id="p1-skill">CHƯỞNG</div><div class="btn btn-txt btn-berserk" id="p1-berserk">HUYẾT<br>NHỤC</div>
+        </div>
+    </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const GROUND_Y = 460;
+let matchTimer = 99, timerInterval, gameOver = false, shakeTime = 0, isShopOpen = false, isGameStarted = false, botDifficulty = 'easy';
 
-    function drawStickman(x, y, color) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 5;
-        // Đầu
-        ctx.beginPath();
-        ctx.arc(x, y, 20, 0, Math.PI * 2);
-        ctx.stroke();
-        // Thân
-        ctx.beginPath();
-        ctx.moveTo(x, y + 20);
-        ctx.lineTo(x, y + 80);
-        ctx.stroke();
-        // Tay
-        ctx.moveTo(x, y + 40); ctx.lineTo(x - 30, y + 70);
-        ctx.moveTo(x, y + 40); ctx.lineTo(x + 30, y + 70);
-        ctx.stroke();
-        // Chân
-        ctx.moveTo(x, y + 80); ctx.lineTo(x - 30, y + 130);
-        ctx.moveTo(x, y + 80); ctx.lineTo(x + 30, y + 130);
-        ctx.stroke();
-    }
+// BIẾN ADMIN CHEAT (XỬ LÝ THEO MÃ CỦA BẠN)
+let adminGodMode = false;
+let adminOnePunch = false;
 
-    // Vẽ ngay lập tức sau khi load
-    function render() {
-        ctx.fillStyle = "#1a1a1a";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        drawStickman(200, 200, "#fff"); // Người que P1
-        drawStickman(700, 200, "#f00"); // Boss
+let fatalityState = { active: false, stage: 0, timer: 0 }, botDeadPieces = null;
+const btnState = { left: false, right: false, jump: false, down: false, hit: false, block: false, skill: false, rapidPunch: false, berserk: false };
+
+class Fighter {
+    constructor(x, color, side) {
+        this.x = x; this.y = GROUND_Y - 90; this.width = 40; this.height = 90; this.color = color; this.side = side;
+        this.facing = side === 'left' ? 'right' : 'left';
+        this.hp = 100; this.maxHp = 100; this.energy = 0; this.maxEnergy = 100; this.honor = 0;
+        this.unlockedEvolved = false; this.unlockedShield = false; this.currentEquippedSkill = 'default';
+        this.vx = 0; this.vy = 0; this.isGrounded = true; this.isBlocking = false; this.isStunned = false; this.stunTimer = 0;
+        this.actionState = 'idle'; this.animTimer = 0; this.hitCooldown = 0;
+        this.rapidPunchCooldown = 0; this.isRapidPunching = false; this.rapidPunchTimer = 0;
+        this.critMode = false; this.critTimer = 0; this.berserkMode = false; this.berserkTimer = 0; this.berserkCooldown = 0;
     }
-    
-    render();
+    takeDamage(amount, isCrit = false) {
+        if (fatalityState.active) return;
+        if (this.side === 'left' && adminGodMode) return; // CHEAT BẤT TỬ
+        let finalDamage = amount; if (isCrit) finalDamage = amount * 1.75;
+        if (this.side === 'left' && this.berserkMode) finalDamage *= 2;
+        if (this.isBlocking) finalDamage *= (this.currentEquippedSkill === 'shield' ? 0.04 : 0.2);
+        this.hp -= finalDamage;
+        if (this.side === 'right' && botDifficulty === 'hard' && Math.random() < 0.4) { this.hp = Math.min(this.maxHp, this.hp + 4); spawnExplosion(this.x + 20, this.y + 30, '#4caf50', 6); }
+    }
+    update(controls, enemy) {
+        if (fatalityState.active) return;
+        if (this.hitCooldown > 0) this.hitCooldown--; if (this.rapidPunchCooldown > 0) this.rapidPunchCooldown--; if (this.berserkCooldown > 0) this.berserkCooldown--;
+        if (this.isStunned) { this.vx = 0; this.stunTimer--; if (this.stunTimer <= 0) this.isStunned = false; this.applyPhysics(); return; }
+        this.facing = this.x < enemy.x ? 'right' : 'left';
+        if (this.side === 'right' && this.critTimer > 0) { this.critTimer--; if (this.critTimer <= 0) this.critMode = false; }
+        if (this.side === 'left' && this.berserkTimer > 0) { this.berserkTimer--; if (this.berserkTimer <= 0) this.berserkMode = false; }
+        if (this.side === 'left' && controls.berserk) {
+            if (this.berserkCooldown === 0 && !this.isBlocking) { this.hp = Math.max(1, this.hp - this.hp * 0.5); this.berserkMode = true; this.berserkTimer = 180; this.berserkCooldown = 240; shakeTime = 15; spawnExplosion(this.x + 20, this.y + 45, '#7b1fa2', 30); }
+            controls.berserk = false;
+        }
+        if (this.isRapidPunching) {
+            this.rapidPunchTimer--; this.actionState = 'rapidPunching'; this.x += this.facing === 'right' ? 1.5 : -1.5;
+            if (Math.abs((this.x+20) - (enemy.x+20)) <= 110) {
+                let dmgEach = (this.side === 'right' && botDifficulty === 'hard') ? (350 / 120) : (70 / 120);
+                if (this.side === 'left' && this.berserkMode) dmgEach *= 3;
+                if (this.side === 'left' && adminOnePunch) dmgEach = 999; // CHEAT ONE PUNCH
+                enemy.takeDamage(dmgEach, this.critMode); if (!enemy.isBlocking) { enemy.isStunned = true; enemy.stunTimer = 1; }
+            }
+            if (this.rapidPunchTimer <= 0) { this.isRapidPunching = false; this.actionState = 'idle'; }
+            this.applyPhysics(); return;
+        }
+        if (controls.rapidPunch) { if (this.energy >= 50 && this.rapidPunchCooldown === 0 && !this.isBlocking) { this.energy -= 50; this.rapidPunchCooldown = 1200; this.isRapidPunching = true; this.rapidPunchTimer = 120; shakeTime = 30; } controls.rapidPunch = false; }
+        if (controls.down || controls.block) { this.isBlocking = true; this.actionState = 'blocking'; this.vx = 0; } 
+        else {
+            this.isBlocking = false; this.actionState = 'idle';
+            if (controls.left) { this.vx = -5; this.actionState = 'walking'; } else if (controls.right) { this.vx = 5; this.actionState = 'walking'; } else this.vx = 0;
+            if (controls.jump && this.isGrounded) { this.vy = -14; this.isGrounded = false; }
+        }
+        if (controls.hit) {
+            if (this.hitCooldown === 0 && !this.isBlocking) {
+                this.actionState = 'hitting'; this.animTimer = 10; this.hitCooldown = 30;
+                let reach = this.facing === 'right' ? this.x + this.width + 30 : this.x - 30;
+                if (reach >= enemy.x && reach <= enemy.x + enemy.width && this.y + this.height >= enemy.y && this.y <= enemy.y + enemy.height) {
+                    let baseDmg = (this.side === 'right' && botDifficulty === 'hard') ? 50 : 10;
+                    if (this.side === 'left' && this.berserkMode) baseDmg = 30;
+                    if (this.side === 'left' && adminOnePunch) baseDmg = 999; // CHEAT ONE PUNCH
+                    enemy.takeDamage(baseDmg, this.critMode);
+                    if (!enemy.isBlocking) { enemy.isStunned = true; enemy.stunTimer = 3; enemy.vx = this.facing === 'right' ? 5 : -5; }
+                    this.energy = Math.min(this.maxEnergy, this.energy + 15); this.honor += 4;
+                    spawnExplosion(reach, this.y + 30, this.berserkMode ? '#ff1744' : (this.critMode ? '#ff5252' : '#ffeb3b'), 8);
+                }
+            }
+            controls.hit = false;
+        }
+        if (controls.skill) {
+            if (this.energy >= 25 && !this.isBlocking) {
+                let bX = this.facing === 'right' ? this.x + this.width + 5 : this.x - 15;
+                let bVx = this.facing === 'right' ? 12 : -12;
+                let dmgD = this.berserkMode ? 54 : 18, dmgE = this.berserkMode ? 105 : 35;
+                if (this.side === 'right' && botDifficulty === 'hard') dmgD = 90;
+                if (this.side === 'left' && adminOnePunch) { dmgD = 999; dmgE = 999; } // CHEAT ONE PUNCH
+                if (this.currentEquippedSkill === 'default') { this.energy -= 25; projectiles.push(new Projectile(bX, this.y + 25, bVx, this.color, false, dmgD, this.side)); } 
+                else if (this.currentEquippedSkill === 'evolved') { this.energy -= 25; projectiles.push(new Projectile(bX, this.y + 25, bVx, '#ff9800', true, dmgE, this.side)); }
+                else if (this.currentEquippedSkill === 'shield') { this.energy = Math.min(this.maxEnergy, this.energy + 10); spawnExplosion(this.x + 20, this.y + 45, '#4caf50', 10); }
+            }
+            controls.skill = false;
+        }
+        if (this.actionState === 'hitting') { this.animTimer--; if (this.animTimer <= 0) this.actionState = 'idle'; }
+        this.applyPhysics();
+    }
+    applyPhysics() {
+        this.vy += 0.6; this.x += this.vx; this.y += this.vy;
+        if (this.y >= GROUND_Y - this.height) { this.y = GROUND_Y - this.height; this.vy = 0; this.isGrounded = true; }
+        this.x = Math.max(0, Math.min(canvas.width - this.width, this.x)); this.hp = Math.max(0, this.hp);
+    }
+    draw() {
+        if (this.side === 'right' && fatalityState.active && fatalityState.stage >= 2) return;
+        ctx.save();
+        if (this.side === 'left' && adminGodMode) { ctx.shadowBlur = 25; ctx.shadowColor = '#ffeb3b'; ctx.strokeStyle = '#fff59d'; ctx.lineWidth = 4; }
+        else if (this.isRapidPunching) { ctx.shadowBlur = 25; ctx.shadowColor = '#ff1744'; ctx.strokeStyle = '#ff5252'; ctx.lineWidth = 4; }
+        else if (this.berserkMode) { ctx.shadowBlur = 25; ctx.shadowColor = '#7b1fa2'; ctx.strokeStyle = '#ba68c8'; ctx.lineWidth = 4; }
+        else { ctx.strokeStyle = this.color; ctx.lineWidth = 3; }
+        if (this.currentEquippedSkill === 'shield' && this.isBlocking) { ctx.shadowBlur = 20; ctx.shadowColor = '#4caf50'; ctx.beginPath(); ctx.arc(this.x + 20, this.y + 45, 55, 0, Math.PI*2); ctx.strokeStyle = 'rgba(76, 175, 80, 0.7)'; ctx.lineWidth = 3; ctx.stroke(); }
+        let hX = this.x + 20, hY = this.y + 20, cX = hX, cY = this.y + 45, pX = hX, pY = this.y + 65;
+        ctx.beginPath(); ctx.arc(hX, hY, 10, 0, Math.PI * 2); ctx.fillStyle = this.isRapidPunching ? '#ff1744' : (this.isStunned ? '#78909c' : this.color); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(hX, hY + 10); ctx.lineTo(pX, pY); ctx.stroke();
+        ctx.beginPath();
+        if (this.actionState === 'rapidPunching') { for (let i = 0; i < 3; i++) { ctx.moveTo(cX, cY); ctx.lineTo(cX + (this.facing === 'right' ? 35 + Math.random()*25 : -35 - Math.random()*25), cY - 10 + Math.random()*25); } } 
+        else if (this.actionState === 'hitting') { ctx.moveTo(cX, cY); ctx.lineTo(cX + (this.facing === 'right' ? 40 : -40), cY - 5); } 
+        else if (this.actionState === 'blocking') { ctx.moveTo(cX, cY); ctx.lineTo(cX + (this.facing === 'right' ? 15 : -15), cY - 15); } 
+        else { ctx.moveTo(cX, cY); ctx.lineTo(cX - 12, cY + 15); ctx.moveTo(cX, cY); ctx.lineTo(cX + 12, cY + 15); }
+        ctx.stroke(); ctx.beginPath(); ctx.moveTo(pX, pY);
+        if (this.isGrounded && Math.abs(this.vx) > 0) { let cyc = Math.sin(Date.now() * 0.015); ctx.lineTo(pX + (cyc * 15), GROUND_Y); ctx.moveTo(pX, pY); ctx.lineTo(pX - (cyc * 15), GROUND_Y); } 
+        else { ctx.lineTo(pX - 10, this.isGrounded ? GROUND_Y : pY + 25); ctx.moveTo(pX, pY); ctx.lineTo(pX + 10, this.isGrounded ? GROUND_Y : pY + 25); }
+        ctx.stroke(); ctx.restore();
+    }
+}
+
+class Projectile {
+    constructor(x, y, vx, color, evolved = false, damage = 18, ownerSide = 'left') { this.x = x; this.y = y; this.vx = vx; this.width = evolved ? 36 : 16; this.height = evolved ? 20 : 8; this.color = color; this.active = true; this.evolved = evolved; this.damage = damage; this.ownerSide = ownerSide; }
+    update(enemy) {
+        this.x += this.vx; if (this.x < 0 || this.x > canvas.width) this.active = false;
+        if (this.x >= enemy.x && this.x <= enemy.x + enemy.width && this.y >= enemy.y && this.y <= enemy.y + enemy.height) { this.active = false; enemy.takeDamage(this.damage, (this.ownerSide === 'right' && p2.critMode)); spawnExplosion(this.x, this.y, this.color, this.evolved ? 30 : 15); }
+    }
+    draw() { ctx.save(); ctx.fillStyle = this.color; ctx.shadowBlur = this.evolved ? 25 : 12; ctx.shadowColor = this.color; ctx.beginPath(); ctx.ellipse(this.x, this.y, this.width, this.height, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+}
+
+class Particle {
+    constructor(x, y, color) { this.x = x; this.y = y; this.vx = (Math.random() - 0.5) * 12; this.vy = (Math.random() - 0.8) * 14; this.radius = Math.random() * 4 + 1.5; this.color = color; this.alpha = 1; this.life = Math.random() * 25 + 20; }
+    update() { this.x += this.vx; this.y += this.vy; this.vy += 0.2; this.alpha -= 1 / this.life; }
+    draw() { if (this.alpha <= 0) return; ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+}
+
+const p1 = new Fighter(150, '#00e5ff', 'left'), p2 = new Fighter(750, '#ff1744', 'right');
+let projectiles = [], particles = [];
+function spawnExplosion(x, y, color, count) { for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color)); }
+
+/* SỬA LỖI: CHUẨN HOÁ HÀM SO SÁNH CHUỖI KHÔNG PHÂN BIỆT HOA THƯỜNG */
+function checkAdminCode() {
+    const inputEl = document.getElementById('adminCodeInput');
+    const msgEl = document.getElementById('adminMessage');
+    const code = inputEl.value.trim().toLowerCase(); // Chuyển toàn bộ dữ liệu nhập về chữ thường để đồng bộ
+
+    if (code === 'anhdzvcl_god') {
+        adminGodMode = true;
+        msgEl.className = "admin-msg success";
+        msgEl.innerText = "⭐ ĐÃ BẬT BẤT TỬ (GOD MODE) CHO P1!";
+    } else if (code === 'anhdzvcl_money') {
+        p1.honor += 999;
+        document.getElementById('p1-honor').innerText = `Vinh Dự: ${p1.honor}`;
+        msgEl.className = "admin-msg success";
+        msgEl.innerText = "💰 NHẬN THÀNH CÔNG +999 ĐIỂM VINH DỰ!";
+    } else if (code === 'anhdzvcl_onepunch') {
+        adminOnePunch = true;
+        msgEl.className = "admin-msg success";
+        msgEl.innerText = "👊 ĐÃ KÍCH HOẠT MỘT ĐẤM CHẾT BOT (ONE PUNCH)!";
+    } else {
+        msgEl.className = "admin-msg error";
+        msgEl.innerText = "❌ MÃ ADMIN KHÔNG CHÍNH XÁC HOẶC ĐÃ HẾT HẠN!";
+    }
+    inputEl.value = "";
+    setTimeout(() => { msgEl.innerText = ""; }, 4000);
+}
+
+function handleFatalityLogic() {
+    if (!fatalityState.active) return; fatalityState.timer++;
+    if (fatalityState.stage === 1) { p1.actionState = 'walking'; let targetX = p2.x + (p2.x > p1.x ? -55 : 55); p1.x += (targetX - p1.x) * 0.25; if (Math.abs(p1.x - targetX) < 5) { fatalityState.stage = 2; fatalityState.timer = 0; p1.actionState = 'uppercutting'; } }
+    else if (fatalityState.stage === 2) {
+        if (fatalityState.timer === 2) { shakeTime = 40; botDeadPieces = { headX: p2.x + 20, headY: p2.y + 20, bodyX: p2.x + 20, bodyY: p2.y + 50, vx: p1.facing === 'right' ? 4 : -4, vyHead: -16, vyBody: -11, rot: 0 }; spawnExplosion(p2.x + 20, p2.y + 30, '#ff1744', 70); }
+        if (botDeadPieces) { botDeadPieces.headX += botDeadPieces.vx; botDeadPieces.headY += botDeadPieces.vyHead; botDeadPieces.bodyX += botDeadPieces.vx; botDeadPieces.bodyY += botDeadPieces.vyBody; botDeadPieces.vyHead += 0.5; botDeadPieces.vyBody += 0.5; botDeadPieces.rot += 0.15; }
+        if (fatalityState.timer > 70) { fatalityState.active = false; endGame(); }
+    }
+}
+function drawBotDeadPieces() {
+    if (!fatalityState.active || !botDeadPieces || fatalityState.stage < 2) return;
+    ctx.save(); ctx.strokeStyle = '#ff1744'; ctx.lineWidth = 3; ctx.shadowBlur = 15; ctx.shadowColor = '#ff1744';
+    ctx.save(); ctx.translate(botDeadPieces.headX, botDeadPieces.headY); ctx.rotate(botDeadPieces.rot); ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fillStyle = '#ff1744'; ctx.fill(); ctx.stroke(); ctx.restore();
+    ctx.save(); ctx.translate(botDeadPieces.bodyX, botDeadPieces.bodyY); ctx.rotate(-botDeadPieces.rot * 0.8); ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(0, 15); ctx.stroke(); ctx.restore(); ctx.restore();
+}
+function selectDifficulty(level) { botDifficulty = level; isGameStarted = true; document.getElementById('difficulty-screen').style.display = 'none'; resetGame(); }
+function exitToMenu() { isGameStarted = false; clearInterval(timerInterval); resetGame(); adminGodMode = false; adminOnePunch = false; document.getElementById('difficulty-screen').style.display = 'flex'; }
+function openShop() { if (fatalityState.active) return; isShopOpen = true; document.getElementById('shop-modal').style.display = 'flex'; updateShopUI(); }
+function closeShop() { isShopOpen = false; document.getElementById('shop-modal').style.display = 'none'; }
+function updateShopUI() {
+    const btn1 = document.getElementById('buy-item-1'); if(p1.unlockedEvolved) { btn1.innerText = "ĐÃ MUA"; btn1.classList.add('disabled'); } else { btn1.innerText = "100 VD"; p1.honor < 100 ? btn1.classList.add('disabled') : btn1.classList.remove('disabled'); }
+    const btn2 = document.getElementById('buy-item-2'); if(p1.unlockedShield) { btn2.innerText = "ĐÃ MUA"; btn2.classList.add('disabled'); } else { btn2.innerText = "60 VD"; p1.honor < 60 ? btn2.classList.add('disabled') : btn2.classList.remove('disabled'); }
+    updateCardState('card-skill-evolved', 'btn-eq-evolved', p1.unlockedEvolved, 'evolved'); updateCardState('card-skill-shield', 'btn-eq-shield', p1.unlockedShield, 'shield'); updateCardState('card-skill-default', 'btn-eq-default', true, 'default');
+}
+function updateCardState(cardId, btnId, isUnlocked, skillKey) {
+    const card = document.getElementById(cardId), btn = document.getElementById(btnId);
+    if (isUnlocked) { card.classList.add('owned'); if (p1.currentEquippedSkill === skillKey) { card.classList.add('active-equipped'); btn.innerText = "ĐANG DÙNG"; btn.className = "btn-equip active"; btn.disabled = true; } else { card.classList.remove('active-equipped'); btn.innerText = "TRANG BỊ"; btn.className = "btn-equip"; btn.disabled = false; } } else { card.classList.remove('owned', 'active-equipped'); btn.innerText = "CHƯA MỞ"; btn.disabled = true; }
+}
+function buyItem(itemType, cost) {
+    if (p1.honor < cost) return; if (itemType === 1 && !p1.unlockedEvolved) { p1.honor -= cost; p1.unlockedEvolved = true; } else if (itemType === 2 && !p1.unlockedShield) { p1.honor -= cost; p1.unlockedShield = true; } else if (itemType === 3) { p1.honor -= cost; p1.hp = Math.min(p1.maxHp, p1.hp + 50); spawnExplosion(p1.x + 20, p1.y + 30, '#ff3366', 25); }
+    updateShopUI(); document.getElementById('p1-honor').innerText = `Vinh Dự: ${p1.honor}`;
+}
+function equipSkill(skillKey) { p1.currentEquippedSkill = skillKey; const sb = document.getElementById("p1-skill"); if (skillKey === 'default') { sb.innerText = "CHƯỞNG"; sb.style.background = "#1565c0"; } else if (skillKey === 'evolved') { sb.innerText = "THẦN CHƯỞNG"; sb.style.background = "#ff9800"; } else if (skillKey === 'shield') { sb.innerText = "LONG KHIÊN"; sb.style.background = "#2e7d32"; } updateShopUI(); }
+
+function updateAI() {
+    if (gameOver || isShopOpen || !isGameStarted || fatalityState.active) return;
+    let dist = Math.abs((p1.x+20) - (p2.x+20)), ai = { left: false, right: false, jump: false, down: false, hit: false, block: false, skill: false, rapidPunch: false };
+    if (p2.isStunned) return;
+    if (botDifficulty === 'easy') {
+        if (Math.random() < 0.005) p2.energy = Math.min(p2.maxEnergy, p2.energy + 5);
+        if (dist > 240) { if (p2.x > p1.x) ai.left = true; else ai.right = true; } else if (dist <= 240 && dist > 70) { if (Math.random() < 0.3) { if (p2.x > p1.x) ai.left = true; else ai.right = true; } } else { if (Math.random() < 0.15) ai.hit = true; }
+    } else {
+        if (Math.random() < 0.04) p2.energy = Math.min(p2.maxEnergy, p2.energy + 7);
+        if (p2.energy >= 30 && !p2.critMode && Math.random() < 0.015) { p2.energy -= 30; p2.critMode = true; p2.critTimer = 120; spawnExplosion(p2.x+20, p2.y+40, '#e91e63', 25); }
+        if (p2.energy >= 1 && Math.random() < 0.008) { p2.energy -= 1; for(let i=0; i<5; i++) { setTimeout(() => { if (!gameOver && isGameStarted) projectiles.push(new Projectile(p2.x, p2.y + 15 + (i * 10), p2.facing === 'right' ? 15 : -15, '#9c27b0', false, 17.5, p2.side)); }, i*200); } }
+        if (p1.actionState === 'hitting' && dist <= 100 && Math.random() < 0.75) ai.block = true;
+        if (dist > 190) { if (p2.x > p1.x) ai.left = true; else ai.right = true; if (p2.energy >= 25 && Math.random() < 0.05) ai.skill = true; } 
+        else if (dist <= 190 && dist > 60) { if (p2.x > p1.x) ai.left = true; else ai.right = true; } 
+        else { if (Math.random() < 0.45) ai.hit = true; if (p2.energy >= 50 && Math.random() < 0.03) ai.rapidPunch = true; }
+    }
+    p2.update(ai, p1);
+}
+
+const keyMap = { 'a': 'left', 'd': 'right', 'w': 'jump', 's': 'down', 'j': 'hit', 'k': 'block', 'l': 'skill', 'u': 'rapidPunch', 'i': 'berserk' };
+window.addEventListener('keydown', (e) => { if (keyMap[e.key.toLowerCase()]) btnState[keyMap[e.key.toLowerCase()]] = true; });
+window.addEventListener('keyup', (e) => { if (keyMap[e.key.toLowerCase()]) { if (keyMap[e.key.toLowerCase()] === 'down' || keyMap[e.key.toLowerCase()] === 'block') btnState.down = btnState.block = false; else btnState[keyMap[e.key.toLowerCase()]] = false; } });
+
+function bindTouchBtn(id, actionStr) {
+    const el = document.getElementById(id); if (!el) return;
+    el.addEventListener('touchstart', (e) => { e.preventDefault(); if(isGameStarted) btnState[actionStr] = true; }, {passive: false});
+    el.addEventListener('touchend', (e) => { e.preventDefault(); btnState[actionStr] = false; }, {passive: false});
+    el.addEventListener('mousedown', () => { if(isGameStarted) btnState[actionStr] = true; });
+    el.addEventListener('mouseup', () => btnState[actionStr] = false); el.addEventListener('mouseleave', () => btnState[actionStr] = false);
+}
+bindTouchBtn('p1-left', 'left'); bindTouchBtn('p1-right', 'right'); bindTouchBtn('p1-jump', 'jump'); bindTouchBtn('p1-down', 'down'); bindTouchBtn('p1-hit', 'hit'); bindTouchBtn('p1-block', 'block'); bindTouchBtn('p1-skill', 'skill'); bindTouchBtn('p1-rapid', 'rapidPunch'); bindTouchBtn('p1-berserk', 'berserk');
+
+function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save();
+    if (shakeTime > 0) { ctx.translate((Math.random() - 0.5) * 7, (Math.random() - 0.5) * 7); shakeTime--; }
+    ctx.fillStyle = '#1e1f29'; ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y); ctx.fillStyle = '#ff3366'; ctx.fillRect(0, GROUND_Y, canvas.width, 3);
+    if (!gameOver && !isShopOpen && isGameStarted) { if (fatalityState.active) handleFatalityLogic(); else { p1.update(btnState, p2); updateAI(); } }
+    projectiles = projectiles.filter(p => p.active); projectiles.forEach(p => { if (!gameOver && isGameStarted && !fatalityState.active) p.update(p.vx > 0 ? p2 : p1); p.draw(); });
+    particles = particles.filter(pt => pt.alpha > 0); particles.forEach(pt => { pt.update(); pt.draw(); });
+    p1.draw(); p2.draw(); drawBotDeadPieces(); ctx.restore();
+    let p1P = Math.round((p1.hp / p1.maxHp) * 100), p2P = Math.round((p2.hp / p2.maxHp) * 100);
+    document.getElementById('p1-hp').style.width = `${p1P}%`; document.getElementById('p2-hp').style.width = `${p2P}%`;
+    document.getElementById('p1-hp-text').innerText = `${p1P}%`; document.getElementById('p2-hp-text').innerText = `${p2P}%`;
+    document.getElementById('p1-mp').style.width = `${p1.energy}%`; document.getElementById('p2-mp').style.width = `${p2.energy}%`;
+    document.getElementById('p1-honor').innerText = `Vinh Dự: ${p1.honor}`;
+    if (!gameOver && isGameStarted && !fatalityState.active) { if (p2.hp <= 0) { fatalityState.active = true; fatalityState.stage = 1; fatalityState.timer = 0; } else if (p1.hp <= 1 || matchTimer <= 0) endGame(); }
+    requestAnimationFrame(loop);
+}
+
+function endGame() {
+    gameOver = true; clearInterval(timerInterval); const wt = document.getElementById('winnerText');
+    if (p1.hp > 1 && p2.hp <= 0) { let r = botDifficulty === 'hard' ? 100 : 15; p1.honor += r; wt.innerText = `FATALITY!!!\nGOD STICKMAN THẮNG!\n(+${r} VINH DỰ)`; }
+    else wt.innerText = "SHADOW BOSS THẮNG CUỘC!";
+    document.getElementById('game-over').style.display = 'flex';
+}
+function resetGame() {
+    p1.x = 150; p1.y = GROUND_Y-90; p1.hp = 100; p1.energy = 0; p1.isStunned = false; p1.isRapidPunching = false; p1.berserkMode = false; p1.actionState = 'idle'; p1.hitCooldown = 0; p1.rapidPunchCooldown = 0; p1.berserkCooldown = 0;
+    p2.x = 750; p2.y = GROUND_Y-90; p2.hp = 100; p2.energy = 0; p2.isStunned = false; p2.critMode = false;
+    projectiles = []; particles = []; matchTimer = 99; gameOver = false; botDeadPieces = null; fatalityState = { active: false, stage: 0, timer: 0 }; closeShop();
+    document.getElementById('game-over').style.display = 'none'; clearInterval(timerInterval); if(isGameStarted) startTimer();
+}
+function startTimer() { timerInterval = setInterval(() => { if (!gameOver && !isShopOpen && isGameStarted && !fatalityState.active) { matchTimer--; document.getElementById('game-timer').innerText = matchTimer; if (matchTimer <= 0) endGame(); } }, 1000); }
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
