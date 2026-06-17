@@ -2,26 +2,37 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>God Stickman Fighting</title>
-    <link rel="stylesheet" href="style.css">
+    <title>God Stickman</title>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; }
+        canvas { border: 2px solid #555; background: #111; }
+        #ui { position: absolute; top: 10px; left: 10px; }
+    </style>
 </head>
 <body>
-
-<div id="game-wrapper">
-    <div id="overlay">
-        <h1>GOD STICKMAN FIGHTING</h1>
-        <button onclick="startGame()">BẮT ĐẦU TRẬN ĐẤU</button>
-        
-        <div class="admin-box">
-            <input type="text" id="adminCode" placeholder="Nhập mã Admin...">
-            <button onclick="checkAdmin()">Kích hoạt</button>
-        </div>
-        <div id="msg"></div>
+    <div id="ui">
+        <input type="text" id="code" placeholder="Mã Admin...">
+        <button onclick="check()">Kích hoạt</button>
+        <p id="msg"></p>
     </div>
-    <canvas id="gameCanvas" width="960" height="540"></canvas>
-</div>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-<script src="script.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Vẽ thử nhân vật để kiểm tra
+        ctx.fillStyle = "white";
+        ctx.fillRect(50, 200, 40, 80);
+
+        function check() {
+            const code = document.getElementById('code').value;
+            if (code === 'anhdzvcl_god') {
+                document.getElementById('msg').innerText = "Đã bật Bất Tử!";
+            } else {
+                document.getElementById('msg').innerText = "Sai mã!";
+            }
+        }
+    </script>
 </body>
 </html>
