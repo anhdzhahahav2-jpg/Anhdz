@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>God Stickman Fighting</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="game-wrapper">
+    <div id="overlay">
+        <h1>GOD STICKMAN FIGHTING</h1>
+        <button onclick="startGame()">BẮT ĐẦU TRẬN ĐẤU</button>
+        
+        <div class="admin-box">
+            <input type="text" id="adminCode" placeholder="Nhập mã Admin...">
+            <button onclick="checkAdmin()">Kích hoạt</button>
+        </div>
+        <div id="msg"></div>
+    </div>
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
